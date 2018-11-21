@@ -138,20 +138,17 @@ def get_tweets(from: 'elonmusk', number: 1)
           end
         end
 
-        grid([8, 1], [8,3]).bounding_box do
-          text "Publication Classification", style: :bold
-          # replace with tweet.created_at
-        end
-
-        grid([9, 0], [11,3]).bounding_box do
-          stroke_bounds
-          styles = %i[ bold italic bold_italic normal]
-          # 5 - tweet.user_mentions.first(2).count lines of randomly-styled letters and numbers
-          4.times do
-            text "Random Format stuff here\n", style: styles.sample, align: :center
-          end
-        end
-
+        # grid([8, 1], [8,3]).bounding_box do
+        #   text "Publication Classification", style: :bold
+        # end
+        #
+        # grid([9, 0], [11,3]).bounding_box do
+        #   styles = %i[ bold italic bold_italic normal]
+        #   # 4 - tweet.entities.user_mentions.first(2).count lines of randomly-styled letters and numbers
+        #   4.times do
+        #     text "Random Format stuff here\n", style: styles.sample, align: :center
+        #   end
+        # end
 
         pad_bottom(45) { text "ABSTRACT", style: :bold, align: :center }
 
