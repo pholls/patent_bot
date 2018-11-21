@@ -13,7 +13,13 @@ require 'barby'
 require 'barby/barcode/code_39'
 require 'barby/outputter/prawn_outputter'
 
+require 'date'
+
+require_relative 'fonts'
+
 Prawn::Font::AFM.hide_m17n_warning = true
+
+TWEET = {:created_at=>"Wed Nov 21 15:57:52 +0000 2018", :id=>1065273096813203458, :id_str=>"1065273096813203458", :text=>"@FredericLambert @speceye @Tesla Good idea", :truncated=>false, :entities=>{:hashtags=>[], :symbols=>[], :user_mentions=>[{:screen_name=>"FredericLambert", :name=>"Fred Lambert", :id=>38253449, :id_str=>"38253449", :indices=>[0, 16]}, {:screen_name=>"speceye", :name=>"John Henahan", :id=>23550675, :id_str=>"23550675", :indices=>[17, 25]}, {:screen_name=>"Tesla", :name=>"Tesla", :id=>13298072, :id_str=>"13298072", :indices=>[26, 32]}], :urls=>[]}, :metadata=>{:iso_language_code=>"en", :result_type=>"recent"}, :source=>"<a href=\"http://twitter.com/download/iphone\" rel=\"nofollow\">Twitter for iPhone</a>", :in_reply_to_status_id=>1065271507188965377, :in_reply_to_status_id_str=>"1065271507188965377", :in_reply_to_user_id=>38253449, :in_reply_to_user_id_str=>"38253449", :in_reply_to_screen_name=>"FredericLambert", :user=>{:id=>44196397, :id_str=>"44196397", :name=>"Elon Musk", :screen_name=>"elonmusk", :location=>"", :description=>"", :url=>nil, :entities=>{:description=>{:urls=>[]}}, :protected=>false, :followers_count=>23471870, :friends_count=>75, :listed_count=>47443, :created_at=>"Tue Jun 02 20:12:29 +0000 2009", :favourites_count=>1836, :utc_offset=>nil, :time_zone=>nil, :geo_enabled=>false, :verified=>true, :statuses_count=>5995, :lang=>"en", :contributors_enabled=>false, :is_translator=>false, :is_translation_enabled=>false, :profile_background_color=>"C0DEED", :profile_background_image_url=>"http://abs.twimg.com/images/themes/theme1/bg.png", :profile_background_image_url_https=>"https://abs.twimg.com/images/themes/theme1/bg.png", :profile_background_tile=>false, :profile_image_url=>"http://pbs.twimg.com/profile_images/972170159614906369/0o9cdCOp_normal.jpg", :profile_image_url_https=>"https://pbs.twimg.com/profile_images/972170159614906369/0o9cdCOp_normal.jpg", :profile_banner_url=>"https://pbs.twimg.com/profile_banners/44196397/1354486475", :profile_link_color=>"0084B4", :profile_sidebar_border_color=>"C0DEED", :profile_sidebar_fill_color=>"DDEEF6", :profile_text_color=>"333333", :profile_use_background_image=>true, :has_extended_profile=>true, :default_profile=>false, :default_profile_image=>false, :following=>false, :follow_request_sent=>false, :notifications=>false, :translator_type=>"none"}, :geo=>nil, :coordinates=>nil, :place=>nil, :contributors=>nil, :is_quote_status=>false, :retweet_count=>21, :favorite_count=>458, :favorited=>false, :retweeted=>false, :lang=>"en"}
 
 def location#(tweet)
   # return tweet.geo if tweet.geo?
@@ -44,23 +50,25 @@ def get_tweets(from: 'elonmusk', number: 1)
   #   config.access_token_secret = ENV["ACCESS_SECRET"]
   # end
 
-  time = Time.now.getutc
-  # replace with tweet timestamp
+  time = DateTime.parse TWEET[:created_at]
   timestamp = time.strftime('%Y%m%d%H%M%S%L')
 
+  account_created = DateTime.parse TWEET[:user][:created_at]
+
   # client.search("from:#{from}", result_type: "recent").take(number).each do |tweet|
+
     # next if tweet.reply? or tweet.retweet?
     # figure out how to do threads -- first tweet is title, subsequent ones are abstract?
     # (tweet is part of thread if it's a reply to tweet.user)
 
     Prawn::Document.generate("media/tweets/#{timestamp}.pdf") do
       font 'Times-Roman'
-      stroke_axis
+      add_fonts
 
-      upc = "US #{timestamp[0..3]}/#{rand(1_000_000).to_s} A1"
+      upc = "#{TWEET[:id_str]}"
       # replace rand with tweet.id
 
-      barcode = Barby::Code39.new upc.gsub '/', ''
+      barcode = Barby::Code39.new upc
       outputter = Barby::PrawnOutputter.new(barcode)
       barcode.annotate_pdf(self, height: 20, x: (bounds.width - outputter.width), y: bounds.top )
 
@@ -69,14 +77,14 @@ def get_tweets(from: 'elonmusk', number: 1)
       end
 
       float do
-        text_box 'Pub. No.: ', at: [350, 685], style: :bold, size: 12, align: :left, width: (bounds.width - 350)
-        text_box upc, at: [350, 685], style: :bold, size: 15, align: :right, width: (bounds.width - 350)
-        text_box 'Pub. Date: ', at: [350, 670], style: :bold, size: 12, align: :left, width: (bounds.width - 350)
-        text_box time.strftime('%b. %e, %Y'), at: [350, 670], style: :bold, size: 15, align: :right, width: (bounds.width - 350)
+        text_box 'Pub. No.: ', at: [325, 690], style: :bold, size: 12, align: :left, width: (bounds.width - 325)
+        text_box upc, at: [325, 690], style: :bold, size: 15, align: :right, width: (bounds.width - 325)
+        text_box 'Pub. Date: ', at: [325, 675], style: :bold, size: 12, align: :left, width: (bounds.width - 325)
+        text_box time.strftime('%b. %e, %Y'), at: [325, 675], style: :bold, size: 15, align: :right, width: (bounds.width - 325)
       end #float
 
       text "United States\nPatent Application Publication", style: :bold, size: 20, align: :left
-      text "@elonmusk, et al.", style: :bold, size: 15, align: :left
+      text "@#{TWEET[:user][:screen_name]}, et al.", style: :bold, size: 15, align: :left
       # replace with tweet.user.screen_name
 
       stroke_horizontal_rule
@@ -86,8 +94,8 @@ def get_tweets(from: 'elonmusk', number: 1)
         define_grid(:columns => 4, :rows => 12, :gutter => 10)
 
         grid([0, 0], [2, 3]).bounding_box do
-          text (0...280).map { ('a'..'z').to_a[rand(26)] }.join.upcase[0..120], style: :bold
-          # replace with tweet.text[0..120]
+          # text (0...280).map { ('a'..'z').to_a[rand(26)] }.join.upcase[0..20], style: :bold
+          text TWEET[:text].upcase[0..140], style: :bold
         end
 
         grid(3, 0).bounding_box do
@@ -95,7 +103,7 @@ def get_tweets(from: 'elonmusk', number: 1)
         end
         grid([3, 1], [3,3]).bounding_box do
           indent(-15) do
-            text "@elonmusk", style: :bold
+            text "@#{TWEET[:user][:screen_name]}", style: :bold
           end
           # replace with tweet.user.screen_name
         end
@@ -105,8 +113,9 @@ def get_tweets(from: 'elonmusk', number: 1)
         end
         grid([4, 1], [6,3]).bounding_box do
           indent(-15) do
-            text "<b>Elon Musk</b>, #{location}; <b>Elon's Patents</b>, #{location}; <b>@annerajb</b>, #{location}", inline_format: true, leading: -3
-            # replace with tweet.user.name + tweet or user location and my display name + location and tweet.user_mentions.first.name + their location
+            text "<b>#{TWEET[:user][:name]}</b>, #{location}; " +
+            "<b>Elon's Patents</b>, #{location}; " +
+            "<b>#{TWEET[:entities][:user_mentions].first[:name]}</b>, #{location}", inline_format: true, leading: -3
           end
         end
 
@@ -115,8 +124,8 @@ def get_tweets(from: 'elonmusk', number: 1)
         end
         grid([6, 1], [6,3]).bounding_box do
           indent(-15) do
-            text "#{time.strftime('%y')}/#{rand(100_000).to_s}", style: :bold
-            # replace with tweet ratio: "#{tweet.favorite_count}/#{tweet.retweet_count}"
+            text "#{TWEET[:favorite_count]}/" +
+            "#{TWEET[:retweet_count]}", style: :bold
           end
         end
 
@@ -125,8 +134,7 @@ def get_tweets(from: 'elonmusk', number: 1)
         end
         grid([7, 1], [7,3]).bounding_box do
           indent(-15) do
-            text "#{time.strftime('%b. %e, %Y')}", style: :bold
-            # replace with tweet.created_at
+            text "#{account_created.strftime('%b.%e, %Y')}", style: :bold
           end
         end
 
