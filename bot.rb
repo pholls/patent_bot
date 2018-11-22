@@ -26,6 +26,7 @@ end
 def abstract(tweet, client)
   text = tweet.full_text.sub(/((https:\/\/t\.co\/\S+))/, '').strip
   text += !!(text =~ /[\.!?]\z/) ? ' ' : '. '
+  text.gsub(/(@\w+)/) {|s| client.user(s).name }
   string = ''
   string += text
   if reply_to_self?(tweet)
@@ -58,6 +59,7 @@ def get_tweets(from: 'elonmusk', number: 1)
   end
 
   tweet = client.search("from:#{from}", result_type: "recent").take(1).last
+
 
   time = tweet.created_at
   timestamp = time.strftime('%Y%m%d%H%M%S%L')
