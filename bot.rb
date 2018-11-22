@@ -203,7 +203,7 @@ def get_tweets(from: 'elonmusk', number: 1)
       next if label.length < 2
       label.gsub(/(@\w+)/) {|s| client.user(s).name } if label.start_with?('@')
       label.capitalize
-    end
+    end.compact.uniq
 
     samples = %W(Elon Grimes 420 Emeralds)
 
