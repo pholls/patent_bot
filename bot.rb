@@ -229,7 +229,7 @@ def get_tweets(from: 'elonmusk', number: 1)
 
   companies = %w(@SpaceX @Tesla @solarcity @boringcompany)
 
-  client.update_with_media "new product from #{companies.sample}:", png_file, options: { in_reply_to_status: tweet }
+  client.update_with_media "new product from #{companies.sample}:", png_file, in_reply_to_status: tweet
 
   Dir[tweets_path].reject{ |file_name| file_name.include?(timestamp) }.each do |pdf_path|
     File.delete(pdf_path)
