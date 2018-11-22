@@ -199,12 +199,16 @@ def get_tweets(from: 'elonmusk', number: 1)
       # put this into a text_box that will truncate text
     end #column_box
 
-    labels = abstract(tweet, client).gsub(/[\.!?,]/, '').split.map(&:capitalize).reject { |e| e[0] == '@' or e.length < 2 }
+    labels = abstract(tweet, client).gsub(/[\.!?,]/, '').split.map do |label|
+      next if label.length < 2
+      label.gsub(/(@\w+)/) {|s| client.user(s).name } if label.start_with?('@')
+      label.capitalize
+    end
 
     samples = %W(Elon Grimes 420 Emeralds)
 
     (4 - labels.length).times do
-      labels += samples.delete(samples.sample)
+      labels << samples.delete(samples.sample)
     end
 
     bounding_box([0, cursor], width: bounds.width, height: cursor) do
