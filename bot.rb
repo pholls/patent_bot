@@ -195,8 +195,7 @@ def get_tweets(from: 'elonmusk', number: 1)
 
       pad_bottom(45) { text "ABSTRACT", style: :bold, align: :center }
 
-      text "#{abstract(tweet, client)}", align: :justify
-      # put this into a text_box that will truncate text
+      text_box abstract(tweet, client), at: [275, cursor], width: bounds.width, height: cursor, align: :justify, overflow: :shrink_to_fit, min_font_size: 10
     end #column_box
 
     labels = abstract(tweet, client).gsub(/[\.!?,]/, '').split.map do |label|
