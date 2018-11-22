@@ -19,119 +19,6 @@ require 'date'
 
 require_relative 'fonts'
 
-# TWEET = {
-#   :created_at=>"Wed Nov 21 15:57:52 +0000 2018",
-#   :id=>1065273096813203458,
-#   :id_str=>"1065273096813203458",
-#   :text=>"@FredericLambert @speceye @Tesla Good idea",
-#   :truncated=>false,
-#   :entities=>{
-#     :hashtags=>[],
-#     :symbols=>[],
-#     :user_mentions=>[
-#       {:screen_name=>"FredericLambert",
-#         :name=>"Fred Lambert🍣🍣🍣🍣🍣",
-#         :id=>38253449,
-#         :id_str=>"38253449",
-#         :indices=>[0, 16]},
-#       {:screen_name=>"speceye",
-#         :name=>"John Henahan",
-#         :id=>23550675,
-#         :id_str=>"23550675",
-#         :indices=>[17, 25]},
-#       {:screen_name=>"Tesla",
-#         :name=>"Tesla",
-#         :id=>13298072,
-#         :id_str=>"13298072",
-#         :indices=>[26, 32]}],
-#     :urls=>[]},
-#     :metadata=>
-#       {:iso_language_code=>"en",
-#         :result_type=>"recent"},
-#     :source=>"<a href=\"http://twitter.com/download/iphone\" rel=\"nofollow\">Twitter for iPhone</a>",
-#     :in_reply_to_status_id=>1065271507188965377,
-#     :in_reply_to_status_id_str=>"1065271507188965377",
-#     :in_reply_to_user_id=>38253449,
-#     :in_reply_to_user_id_str=>"38253449",
-#     :in_reply_to_screen_name=>"FredericLambert",
-#     :user=>{
-#       :id=>44196397,
-#       :id_str=>"44196397",
-#       :name=>"Elon Musk",
-#       :screen_name=>"elonmusk",
-#       :location=>"",
-#       :description=>"",
-#       :url=>nil,
-#       :entities=>
-#         {:description=>
-#           {:urls=>[]}
-#         },
-#       :protected=>false,
-#       :followers_count=>23471870,
-#       :friends_count=>75,
-#       :listed_count=>47443,
-#       :created_at=>"Tue Jun 02 20:12:29 +0000 2009",
-#       :favourites_count=>1836,
-#       :utc_offset=>nil,
-#       :time_zone=>nil,
-#       :geo_enabled=>false,
-#       :verified=>true,
-#       :statuses_count=>5995,
-#       :lang=>"en",
-#       :contributors_enabled=>false,
-#       :is_translator=>false,
-#       :is_translation_enabled=>false,
-#       :profile_background_color=>"C0DEED",
-#       :profile_background_image_url=>"http://abs.twimg.com/images/themes/theme1/bg.png",
-#       :profile_background_image_url_https=>"https://abs.twimg.com/images/themes/theme1/bg.png",
-#       :profile_background_tile=>false,
-#       :profile_image_url=>"http://pbs.twimg.com/profile_images/972170159614906369/0o9cdCOp_normal.jpg",
-#       :profile_image_url_https=>"https://pbs.twimg.com/profile_images/972170159614906369/0o9cdCOp_normal.jpg",
-#       :profile_banner_url=>"https://pbs.twimg.com/profile_banners/44196397/1354486475",
-#       :profile_link_color=>"0084B4",
-#       :profile_sidebar_border_color=>"C0DEED",
-#       :profile_sidebar_fill_color=>"DDEEF6",
-#       :profile_text_color=>"333333",
-#       :profile_use_background_image=>true,
-#       :has_extended_profile=>true,
-#       :default_profile=>false,
-#       :default_profile_image=>false,
-#       :following=>false,
-#       :follow_request_sent=>false,
-#       :notifications=>false,
-#       :translator_type=>"none"},
-#     :geo=>nil,
-#     :coordinates=>nil,
-#     :place=>nil,
-#     :contributors=>nil,
-#     :is_quote_status=>false,
-#     :retweet_count=>21,
-#     :favorite_count=>458,
-#     :favorited=>false,
-#     :retweeted=>false,
-#     :lang=>"en"}
-
-def location#(tweet)
-  # return tweet.geo if tweet.geo?
-  # map this to a city, state, country location
-
-  # return tweet.user.location unless tweet.user.location.nil?
-  # map this to a city, state, country location
-
-  Faker::Address.city +
-  ', ' +
-  Faker::Address.state_abbr +
-  " (#{Faker::Address.country_code})"
-end
-
-def get_user_location(user)
-  user.location
-end
-
-def get_tweet_location(tweet)
-  tweet.geo
-end
-
 def reply_to_self?(tweet)
   tweet.reply? and tweet.in_reply_to_user_id == tweet.user.id
 end
@@ -143,9 +30,6 @@ def abstract(tweet, client)
   string += text
   if reply_to_self?(tweet)
     string.prepend abstract(client.status(tweet.in_reply_to_status_id), client)
-    # get the parent tweet
-    # add parent tweet to string
-    # repeat if parent is reply to self
   end
   return string
 end
@@ -173,7 +57,6 @@ def get_tweets(from: 'elonmusk', number: 1)
     config.access_token_secret = ENV["ACCESS_SECRET"]
   end
 
-  app_user = client.user(id: '1065049791829237765')
   tweet = client.search("from:#{from}", result_type: "recent").take(1).last
 
   time = tweet.created_at
@@ -346,7 +229,7 @@ def get_tweets(from: 'elonmusk', number: 1)
 
   companies = %w(@SpaceX @Tesla @solarcity @boringcompany)
 
-  tweet = client.update_with_media "new product from #{companies.sample}:", png_file, options: { in_reply_to_status: tweet }
+  client.update_with_media "new product from #{companies.sample}:", png_file, options: { in_reply_to_status: tweet }
 
   Dir[tweets_path].reject{ |file_name| file_name.include?(timestamp) }.each do |pdf_path|
     File.delete(pdf_path)
