@@ -105,7 +105,7 @@ def get_tweets(from: 'elonmusk', number: 1)
     end #float
 
     text "United States\nPatent Application Publication", style: :bold, size: 20, align: :left
-    text "#{tweet.user.name}, et al.", style: :bold, size: 15, align: :left
+    text "#{tweet.user.name.split.last} et al.", style: :bold, size: 15, align: :left
 
     move_down 5
     stroke_horizontal_rule
