@@ -24,7 +24,7 @@ def reply_to_self?(tweet)
 end
 
 def abstract(tweet, client)
-  text = tweet.full_text.sub(/((https:\/\/t\.co\/\S+))/, '').strip
+  text = tweet.full_text.gsub(/((https:\/\/t\.co\/\S+))/, '').strip
   text += !!(text =~ /[\.!?]\z/) ? ' ' : '. '
   text.gsub(/(@\w+)/) {|s| client.user(s).name }
   string = ''
@@ -47,6 +47,11 @@ def inventors(tweet, client, company)
     array << client.user(company)
   end
   return array
+end
+
+def get_title(tweet, client)
+  return get_title(client.status(tweet.in_reply_to_status_id), client) if reply_to_self? tweet
+  return tweet.text.gsub(/((https:\/\/t\.co\/\S+))/, '').gsub(/(@\w+)/) {|s| client.user(s).name }.strip
 end
 
 def get_tweets(from: 'elonmusk', number: 1)
@@ -111,7 +116,7 @@ def get_tweets(from: 'elonmusk', number: 1)
 
       title_box = grid([0, 0], [2, 3])
 
-      text_box tweet.text.gsub(/(@\S+)/, '').upcase, at: [title_box.left, title_box.top], style: :bold, width: title_box.width, height: title_box.height, overflow: :shrink_to_fit, min_font_size: 10, size: 30
+      text_box get_title(tweet, client).upcase, at: [title_box.left, title_box.top], style: :bold, width: title_box.width, height: title_box.height, overflow: :shrink_to_fit, min_font_size: 10, size: 30
 
       grid(3, 0).bounding_box do
         text "Applicant:"
