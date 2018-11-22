@@ -65,7 +65,7 @@ def get_tweets(from: 'elonmusk', number: 1)
   current_filename = "./media/tweets/#{timestamp}.pdf"
   tweets_path = "./media/tweets/*.pdf"
 
-  # return if Dir[tweets_path].include?(current_filename)
+  return if Dir[tweets_path].include?(current_filename)
   # do nothing if most recent tweet has been formatted already
 
   account_created = tweet.user.created_at
