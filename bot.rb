@@ -129,7 +129,7 @@ def get_tweets(from: 'elonmusk', number: 1)
       end
       grid([4, 1], [6,3]).bounding_box do
         indent(-15) do
-          text inventors_string, inline_format: true, leading: -3
+          text inventors_string.chomp('; '), inline_format: true, leading: -3
         end
       end
 
