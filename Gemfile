@@ -9,3 +9,5 @@ gem 'prawn-emoji', require: false
 
 gem 'faker'
 gem 'barby'
+
+gem 'rmagick'

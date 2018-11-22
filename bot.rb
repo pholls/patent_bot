@@ -13,6 +13,8 @@ require 'barby'
 require 'barby/barcode/code_39'
 require 'barby/outputter/prawn_outputter'
 
+require 'rmagick'
+
 require 'date'
 
 require_relative 'fonts'
@@ -177,13 +179,22 @@ def get_tweets(from: 'elonmusk', number: 1)
   time = tweet.created_at
   timestamp = time.strftime('%Y%m%d%H%M%S%L')
 
+  current_filename = "./media/tweets/#{timestamp}.pdf"
+  tweets_path = "./media/tweets/*.pdf"
+
+  # return if Dir[tweets_path].include?(current_filename)
+  # do nothing if most recent tweet has been formatted already
+
   account_created = tweet.user.created_at
 
-  # next if tweet.reply? or tweet.retweet?
-  # figure out how to do threads -- first tweet is title, subsequent ones are abstract?
-  # (tweet is part of thread if it's a reply to tweet.user)
-
   Prawn::Document.generate("media/tweets/#{timestamp}.pdf") do
+    float do
+      canvas do
+        fill_color "FFFFFF"
+        fill_rectangle [bounds.left, bounds.top], bounds.right, bounds.top
+      end
+    end
+    fill_color "000000"
     add_fonts
 
     upc = "#{tweet.id}"
@@ -325,6 +336,23 @@ def get_tweets(from: 'elonmusk', number: 1)
     end #bounding_box for diagram
 
   end #generate PDF
+
+  image = Magick::Image.read(current_filename)
+  image[0].write(current_filename.sub(".pdf", "") + ".png")
+
+  png_path = "./media/tweets/#{timestamp}.png"
+
+  png_file = File.new png_path
+
+  companies = %w(@SpaceX @Tesla @solarcity @boringcompany)
+
+  tweet = client.update_with_media "new product from #{companies.sample}:", png_file, options: { in_reply_to_status: tweet }
+
+  Dir[tweets_path].reject{ |file_name| file_name.include?(timestamp) }.each do |pdf_path|
+    File.delete(pdf_path)
+  end
+
+  File.delete(png_path)
 
 end #get_tweets
 
