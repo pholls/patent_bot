@@ -24,7 +24,8 @@ Backlog:
 Emoji Handling (https://github.com/hidakatsuya/prawn-emoji)
 Code Cleanup
 Twitter Thumbnail (or cropping image)
-Randomizing Diagrams (or at least making them more interesting)
+Make my tweet a reply to the original one
+Randomize Diagrams (or at least making them more interesting)
 Put the Abstract text into a text_box to avoid overflow problems
 
 Copyright:
