@@ -35,7 +35,7 @@ def abstract(tweet, client)
   return string
 end
 
-def inventors(tweet, client)
+def inventors(tweet, client, company)
   array = []
   array << tweet.user
   array << client.user(id: '1065049791829237765')
@@ -44,8 +44,7 @@ def inventors(tweet, client)
   end
   array.compact.uniq
   if array.length < 3
-    following = client.friends(tweet.user.id).to_h[:users]
-    array << client.user(following.sample[:id])
+    array << client.user(company)
   end
   return array
 end
@@ -60,7 +59,6 @@ def get_tweets(from: 'elonmusk', number: 1)
 
   tweet = client.search("from:#{from}", result_type: "recent").take(1).last
 
-
   time = tweet.created_at
   timestamp = time.strftime('%Y%m%d%H%M%S%L')
 
@@ -68,6 +66,8 @@ def get_tweets(from: 'elonmusk', number: 1)
   tweets_path = "./media/tweets/*.pdf"
 
   return if Dir[tweets_path].include?(current_filename)
+  company = %w(SpaceX Tesla solarcity boringcompany).sample
+
   # do nothing if most recent tweet has been formatted already
 
   account_created = tweet.user.created_at
@@ -100,7 +100,7 @@ def get_tweets(from: 'elonmusk', number: 1)
     end #float
 
     text "United States\nPatent Application Publication", style: :bold, size: 20, align: :left
-    text "@#{tweet.user.screen_name}, et al.", style: :bold, size: 15, align: :left
+    text "#{tweet.user.name}, et al.", style: :bold, size: 15, align: :left
 
     move_down 5
     stroke_horizontal_rule
@@ -118,7 +118,7 @@ def get_tweets(from: 'elonmusk', number: 1)
       end
       grid([3, 1], [3,3]).bounding_box do
         indent(-15) do
-          text "@#{tweet.user.screen_name}", style: :bold
+          text "#{tweet.user.name}", style: :bold
         end
       end
 
@@ -126,8 +126,8 @@ def get_tweets(from: 'elonmusk', number: 1)
         text "Inventors:"
       end
       inventors_string = ''
-      inventors(tweet, client).each do |inventor|
-        inventors_string += "<b>#{inventor.name}</b>, @#{inventor.screen_name}; "
+      inventors(tweet, client, company).each do |inventor|
+        inventors_string += "<b>#{inventor.name}</b>, @#{inventor.screen_name} (US); "
       end
       grid([4, 1], [6,3]).bounding_box do
         indent(-15) do
@@ -228,8 +228,6 @@ def get_tweets(from: 'elonmusk', number: 1)
   png_path = "./media/tweets/#{timestamp}.png"
 
   png_file = File.new png_path
-
-  companies = %w(@SpaceX @Tesla @solarcity @boringcompany)
 
   client.update_with_media "new product from #{companies.sample}:", png_file, in_reply_to_status: tweet
 
