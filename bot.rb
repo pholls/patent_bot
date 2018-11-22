@@ -200,7 +200,12 @@ def get_tweets(from: 'elonmusk', number: 1)
     end #column_box
 
     labels = abstract(tweet, client).gsub(/[\.!?,]/, '').split.map(&:capitalize).reject { |e| e[0] == '@' or e.length < 2 }
-    labels += %W(Elon Musk) if labels.length <= 2
+
+    samples = %W(Elon Grimes 420 Emeralds)
+
+    (4 - labels.length).times do
+      labels += samples.delete(samples.sample)
+    end
 
     bounding_box([0, cursor], width: bounds.width, height: cursor) do
       stroke_axis
