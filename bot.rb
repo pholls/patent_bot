@@ -95,16 +95,12 @@ def get_tweets(from: 'elonmusk', number: 1)
     outputter = Barby::PrawnOutputter.new(barcode)
     barcode.annotate_pdf(self, height: 20, x: (bounds.width - outputter.width), y: bounds.top )
 
-    float do
-      text_box upc.gsub('/', ''), at: [(bounds.width - outputter.width), bounds.top], size: 10, align: :center
-    end
+    text_box upc.gsub('/', ''), at: [(bounds.width - outputter.width), bounds.top], size: 10, align: :center
 
-    float do
-      text_box 'Pub. No.: ', at: [300, 690], style: :bold, size: 12, align: :left, width: (bounds.width - 300)
-      text_box upc, at: [300, 690], style: :bold, size: 15, align: :right, width: (bounds.width - 300)
-      text_box 'Pub. Date: ', at: [300, 675], style: :bold, size: 12, align: :left, width: (bounds.width - 300)
-      text_box time.strftime('%b. %e, %Y'), at: [300, 675], style: :bold, size: 15, align: :right, width: (bounds.width - 300)
-    end #float
+    text_box 'Pub. No.: ', at: [300, 690], style: :bold, size: 12, align: :left, width: (bounds.width - 300)
+    text_box upc, at: [300, 690], style: :bold, size: 15, align: :right, width: (bounds.width - 300)
+    text_box 'Pub. Date: ', at: [300, 675], style: :bold, size: 12, align: :left, width: (bounds.width - 300)
+    text_box time.strftime('%b. %e, %Y'), at: [300, 675], style: :bold, size: 15, align: :right, width: (bounds.width - 300)
 
     text "United States\nPatent Application Publication", style: :bold, size: 20, align: :left
     text "#{tweet.user.name.split.last} et al.", style: :bold, size: 15, align: :left
@@ -117,7 +113,6 @@ def get_tweets(from: 'elonmusk', number: 1)
       ###
       # Grid
       ###
-      # TODO: replace this with table
       define_grid(:columns => 4, :rows => 12, :gutter => 10)
 
       title_box = grid([0, 0], [1, 3])
