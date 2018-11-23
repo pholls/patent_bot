@@ -26,7 +26,10 @@ Code Cleanup
 Twitter Thumbnail (or cropping image)
 Make my tweet a reply to the original one
 Randomize Diagrams (or at least making them more interesting)
-Put the Abstract text into a text_box to avoid overflow problems
+(working on this)
+If the abstract is short, add more to that column (like references citations as seen in [THIS][] tweet)
+
+[this]: https://twitter.com/patents_bot/status/1065515248726233088
 
 Copyright:
 Copyright (c) 2018 Pat Holland. See [LICENSE][] for details.
