@@ -67,6 +67,8 @@ def get_tweets(from: 'elonmusk', number: 1)
   time = tweet.created_at
   timestamp = time.strftime('%Y%m%d%H%M%S%L')
 
+  abstracted_tweet = abstract(tweet, client)
+
   current_filename = "./media/tweets/#{timestamp}.pdf"
   tweets_path = "./media/tweets/*.pdf"
 
@@ -171,7 +173,6 @@ def get_tweets(from: 'elonmusk', number: 1)
         ###
         # Grid
         ###
-        # TODO: replace with table
         define_grid(:columns => 4, :rows => 5, :gutter => 1)
 
         grid(0,0).bounding_box do
@@ -212,10 +213,10 @@ def get_tweets(from: 'elonmusk', number: 1)
 
       pad_bottom(30) { text "ABSTRACT", style: :bold, align: :center }
 
-      text_box abstract(tweet, client), at: [275, cursor], width: bounds.width, height: cursor, align: :justify, overflow: :shrink_to_fit, min_font_size: 10
+      text_box abstracted_tweet, at: [275, cursor], width: bounds.width, height: cursor, align: :justify, overflow: :shrink_to_fit, min_font_size: 10
     end #column_box
 
-    labels = abstract(tweet, client).gsub(/[\.!?,]/, '').split.map do |label|
+    labels = abstracted_tweet.gsub(/[\.!?,]/, '').split.map do |label|
       next if label.length < 2
       label.gsub(/(@\w+)/) {|s| client.user(s).name } if label.start_with?('@')
       label.upcase
