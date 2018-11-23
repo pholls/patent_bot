@@ -35,6 +35,16 @@ def add_fonts
     }
   )
 
+  font_path = "./assets/fonts/Arial/"
+  font_families.update(
+    "Arial" => {
+      normal: "#{font_path}Arial.ttf",
+      bold: "#{font_path}Arial Bold.ttf",
+      italic: "#{font_path}Arial Italic.ttf",
+      bold_italic: "#{font_path}Arial Bold Italic.ttf"
+    }
+  )
+
   font 'Times_New_Roman'
 
   fallback_fonts ["IPA", "Times_New_Roman"]

@@ -112,6 +112,10 @@ def get_tweets(from: 'elonmusk', number: 1)
     move_down 10
 
     column_box([0, cursor], :columns => 2, :width => bounds.width, height: 250) do
+      ###
+      # Grid
+      ###
+      # TODO: replace this with table
       define_grid(:columns => 4, :rows => 12, :gutter => 10)
 
       title_box = grid([0, 0], [1, 3])
@@ -164,6 +168,10 @@ def get_tweets(from: 'elonmusk', number: 1)
       end
 
       grid([8, 0], [11,3]).bounding_box do
+        ###
+        # Grid
+        ###
+        # TODO: replace with table
         define_grid(:columns => 4, :rows => 5, :gutter => 1)
 
         grid(0,0).bounding_box do
@@ -194,7 +202,13 @@ def get_tweets(from: 'elonmusk', number: 1)
           text "(#{account_created.strftime('%Y.%m')})"
           text "(#{account_created.strftime('%Y.%m')})"
         end
+        ###
+        # Grid
+        ###
       end
+      ###
+      # Grid
+      ###
 
       pad_bottom(30) { text "ABSTRACT", style: :bold, align: :center }
 
@@ -204,36 +218,25 @@ def get_tweets(from: 'elonmusk', number: 1)
     labels = abstract(tweet, client).gsub(/[\.!?,]/, '').split.map do |label|
       next if label.length < 2
       label.gsub(/(@\w+)/) {|s| client.user(s).name } if label.start_with?('@')
-      label.capitalize
+      label.upcase
     end.compact.uniq
 
-    samples = %W(Elon Grimes 420 Emeralds)
+    samples = %W(ELON GRIMES 420 EMERALDS)
 
     (4 - labels.length).times do
       labels << samples.delete(samples.sample)
     end
 
     bounding_box([0, cursor], width: bounds.width, height: cursor) do
-      stroke_axis
+      image Dir["./media/diagrams/*.png"].sample, fit: [bounds.width, bounds.height], vposition: :top, position: :center
 
-      stroke do
-        rounded_rectangle [400, 350], 100, 200, 20
-        curve [400, 250], [200, 300], :bounds => [[200, 200], [250, 250]]
-        curve [450, 150], [150, 75], :bounds => [[300, 150], [350, 200]]
-        curve [100, 125], [150, 250], :bounds => [[100, 200], [150, 250]]
+      font 'Arial' do
+        [[90, 270], [200, 240], [275, 115], [415, 95]].each do |position|
+          text_box labels.delete(labels.sample), at: position, height: 30, width: 100, overflow: :shrink_to_fit, min_font_size: 8, size: 9, align: :center, valign: :top
+        end
+
+        text_box 'FIG. 1', at: [0, 20], size: 12, align: :center, width: bounds.width, style: :bold
       end
-
-      bounding_box([100, 350], :width => 100, height: 100) do
-        text labels.delete(labels.sample), valign: :center, align: :center
-        transparent(0.5) { stroke_bounds }
-      end
-
-      stroke_polygon [50, 100], [100, 125], [150, 100],
-                     [150, 50], [100, 25], [50, 50]
-      text_box labels.delete(labels.sample), at: [50, 75], width: 100, align: :center
-
-      text_box labels.delete(labels.sample) + "\n" +
-      labels.delete(labels.sample), at: [400, 250], width: 100, align: :center
     end #bounding_box for diagram
 
   end #generate PDF
@@ -245,7 +248,7 @@ def get_tweets(from: 'elonmusk', number: 1)
 
   png_file = File.new png_path
 
-  client.update_with_media "new product from #{companies.sample}:", png_file, in_reply_to_status: tweet
+  client.update_with_media "new product from @#{company}:", png_file, in_reply_to_status: tweet if ENV["ENVIRONMENT"] == 'production'
 
   Dir[tweets_path].reject{ |file_name| file_name.include?(timestamp) }.each do |pdf_path|
     File.delete(pdf_path)
