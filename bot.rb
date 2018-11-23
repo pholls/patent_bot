@@ -114,57 +114,57 @@ def get_tweets(from: 'elonmusk', number: 1)
     column_box([0, cursor], :columns => 2, :width => bounds.width, height: 250) do
       define_grid(:columns => 4, :rows => 12, :gutter => 10)
 
-      title_box = grid([0, 0], [2, 3])
+      title_box = grid([0, 0], [1, 3])
 
-      text_box get_title(tweet, client).upcase, at: [title_box.left, title_box.top], style: :bold, width: title_box.width, height: title_box.height, overflow: :shrink_to_fit, min_font_size: 10, size: 30
+      text_box get_title(tweet, client).upcase, at: [title_box.left, title_box.top], style: :bold, width: title_box.width, height: title_box.height, overflow: :shrink_to_fit, min_font_size: 10, size: 14, leading: -2
 
-      grid(3, 0).bounding_box do
+      grid(2, 0).bounding_box do
         text "Applicant:"
       end
-      grid([3, 1], [3,3]).bounding_box do
+      grid([2, 1], [2, 3]).bounding_box do
         indent(-15) do
           text "#{tweet.user.name}", style: :bold
         end
       end
 
-      grid(4, 0).bounding_box do
+      grid(3, 0).bounding_box do
         text "Inventors:"
       end
       inventors_string = ''
       inventors(tweet, client, company).each do |inventor|
-        inventors_string += "<b>#{inventor.name}</b>, @#{inventor.screen_name} (US); "
+        inventors_string += "<b>#{inventor.name}</b>, @#{inventor.screen_name};\n"
       end
-      grid([4, 1], [6,3]).bounding_box do
+      grid([3, 1], [5,3]).bounding_box do
         indent(-15) do
-          text inventors_string.chomp('; '), inline_format: true, leading: -3
+          text inventors_string.chomp(";\n"), inline_format: true, leading: -1
         end
       end
 
-      grid(6, 0).bounding_box do
+      grid(5, 0).bounding_box do
         text "Appl. No.:"
       end
-      grid([6, 1], [6,3]).bounding_box do
+      grid([5, 1], [5, 3]).bounding_box do
         indent(-15) do
           text "#{tweet.favorite_count}/" +
           "#{tweet.retweet_count}", style: :bold
         end
       end
 
-      grid(7, 0).bounding_box do
+      grid(6, 0).bounding_box do
         text "Filed:"
       end
-      grid([7, 1], [7,3]).bounding_box do
+      grid([6, 1], [6,3]).bounding_box do
         indent(-15) do
           text "#{account_created.strftime('%b.%e, %Y')}", style: :bold
         end
       end
 
-      grid([8, 1], [8,3]).bounding_box do
+      grid([7, 1], [7,3]).bounding_box do
         text "Publication Classification", style: :bold
       end
 
-      grid([9, 0], [11,3]).bounding_box do
-        define_grid(:columns => 4, :rows => 4, :gutter => 1)
+      grid([8, 0], [11,3]).bounding_box do
+        define_grid(:columns => 4, :rows => 5, :gutter => 1)
 
         grid(0,0).bounding_box do
           text "Int. Cl.", style: :bold
@@ -172,7 +172,7 @@ def get_tweets(from: 'elonmusk', number: 1)
 
         grid([1,0], [1,1]).bounding_box do
           text SecureRandom.hex(2).upcase +
-          " #{tweet.user.favourites_count}/#{tweet.user.friends_count}", style: :bold_italic
+          "  #{tweet.user.favourites_count}/#{tweet.user.friends_count}", style: :bold_italic
         end
 
         grid(1,2).bounding_box do
@@ -183,17 +183,20 @@ def get_tweets(from: 'elonmusk', number: 1)
           text "U.S. Cl.", style: :bold
         end
 
-        grid([3,0], [3,1]).bounding_box do
+        grid([3,0], [4,1]).bounding_box do
           text SecureRandom.hex(2).upcase +
-          " 00/#{tweet.user.statuses_count}", style: :bold_italic
+          "  00/#{tweet.user.statuses_count}", style: :bold_italic
+          text SecureRandom.hex(2).upcase +
+          "  00/#{tweet.user.favorites_count}", style: :bold_italic
         end
 
-        grid(3,2).bounding_box do
+        grid([3,2], [4,2]).bounding_box do
+          text "(#{account_created.strftime('%Y.%m')})"
           text "(#{account_created.strftime('%Y.%m')})"
         end
       end
 
-      pad_bottom(45) { text "ABSTRACT", style: :bold, align: :center }
+      pad_bottom(30) { text "ABSTRACT", style: :bold, align: :center }
 
       text_box abstract(tweet, client), at: [275, cursor], width: bounds.width, height: cursor, align: :justify, overflow: :shrink_to_fit, min_font_size: 10
     end #column_box
