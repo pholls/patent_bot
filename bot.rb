@@ -221,11 +221,7 @@ def get_tweets(from: 'elonmusk', number: 1)
       label.upcase
     end.compact.uniq
 
-    samples = %W(ELON GRIMES 420 EMERALDS)
-
-    (4 - labels.length).times do
-      labels << samples.delete(samples.sample)
-    end
+    labels << %W(ELON GRIMES 420 EMERALDS).sample(4 - labels.length) if labels.length < 4
 
     bounding_box([0, cursor], width: bounds.width, height: cursor) do
       image Dir["./media/diagrams/*.png"].sample, fit: [bounds.width, bounds.height], vposition: :top, position: :center
