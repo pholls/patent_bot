@@ -227,7 +227,11 @@ def get_tweets(from: 'elonmusk', number: 1)
       image Dir["./media/diagrams/*.png"].sample, fit: [bounds.width, bounds.height], vposition: :top, position: :center
 
       font 'Arial' do
-        [[90, 270], [200, 240], [275, 115], [415, 95]].each do |position|
+        [[90, 282], [200, 240], [275, 115], [415, 95]].each do |position|
+          fill_color "FFFFFF"
+          fill_rectangle position, 100, 30
+          fill_color "000000"
+
           text_box labels.delete(labels.sample), at: position, height: 30, width: 100, overflow: :shrink_to_fit, min_font_size: 8, size: 9, align: :center, valign: :top
         end
 
