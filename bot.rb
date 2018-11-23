@@ -26,9 +26,8 @@ end
 def abstract(tweet, client)
   text = tweet.full_text.gsub(/((https:\/\/t\.co\/\S+))/, '').strip
   text += !!(text =~ /[\.!?]\z/) ? ' ' : '. '
-  text.gsub(/(@\w+)/) {|s| client.user(s).name }
   string = ''
-  string += text
+  string += text.gsub(/(@\w+)/) {|s| client.user(s).name }
   if reply_to_self?(tweet)
     string.prepend abstract(client.status(tweet.in_reply_to_status_id), client)
   end
@@ -54,6 +53,10 @@ def get_title(tweet, client)
   return tweet.text.gsub(/((https:\/\/t\.co\/\S+))/, '').gsub(/(@\w+)/) {|s| client.user(s).name }.strip
 end
 
+def tweet_too_old?(tweet)
+  (Time.now.utc - tweet.created_at) / 60 > 10
+end
+
 def get_tweets(from: 'elonmusk', number: 1)
   client = Twitter::REST::Client.new do |config|
     config.consumer_key        = ENV["CONSUMER_KEY"]
@@ -72,10 +75,12 @@ def get_tweets(from: 'elonmusk', number: 1)
   current_filename = "./media/tweets/#{timestamp}.pdf"
   tweets_path = "./media/tweets/*.pdf"
 
-  return if Dir[tweets_path].include?(current_filename)
-  company = %w(SpaceX Tesla solarcity boringcompany).sample
+  return if tweet.retweet? or tweet_too_old?(tweet)
+  # do nothing if most recent tweet is too old (> 10 minutes)
 
-  # do nothing if most recent tweet has been formatted already
+  mentions = tweet.user_mentions.collect(&:screen_name)
+  companies = %w(SpaceX Tesla solarcity boringcompany)
+  company = ( mentions & companies ).first or companies.sample
 
   account_created = tweet.user.created_at
 
@@ -244,7 +249,7 @@ def get_tweets(from: 'elonmusk', number: 1)
 
   png_file = File.new png_path
 
-  client.update_with_media "new product from @#{company}:", png_file, in_reply_to_status: tweet if ENV["ENVIRONMENT"] == 'production'
+  client.update_with_media "new patent application from @#{tweet.user.screen_name} and @#{company}:", png_file, in_reply_to_status: tweet if ENV["ENVIRONMENT"] == 'production'
 
   Dir[tweets_path].reject{ |file_name| file_name.include?(timestamp) }.each do |pdf_path|
     File.delete(pdf_path)
