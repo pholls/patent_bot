@@ -24,8 +24,9 @@ def reply_to_self?(tweet)
 end
 
 def abstract(tweet, client)
-  text = tweet.full_text.sub(/((https:\/\/t\.co\/\S+))/, '').strip
+  text = tweet.full_text.gsub(/((https:\/\/t\.co\/\S+))/, '').strip
   text += !!(text =~ /[\.!?]\z/) ? ' ' : '. '
+  text.gsub(/(@\w+)/) {|s| client.user(s).name }
   string = ''
   string += text
   if reply_to_self?(tweet)
@@ -34,7 +35,7 @@ def abstract(tweet, client)
   return string
 end
 
-def inventors(tweet, client)
+def inventors(tweet, client, company)
   array = []
   array << tweet.user
   array << client.user(id: '1065049791829237765')
@@ -43,10 +44,14 @@ def inventors(tweet, client)
   end
   array.compact.uniq
   if array.length < 3
-    following = client.friends(tweet.user.id).to_h[:users]
-    array << client.user(following.sample[:id])
+    array << client.user(company)
   end
   return array
+end
+
+def get_title(tweet, client)
+  return get_title(client.status(tweet.in_reply_to_status_id), client) if reply_to_self? tweet
+  return tweet.text.gsub(/((https:\/\/t\.co\/\S+))/, '').gsub(/(@\w+)/) {|s| client.user(s).name }.strip
 end
 
 def get_tweets(from: 'elonmusk', number: 1)
@@ -62,10 +67,14 @@ def get_tweets(from: 'elonmusk', number: 1)
   time = tweet.created_at
   timestamp = time.strftime('%Y%m%d%H%M%S%L')
 
+  abstracted_tweet = abstract(tweet, client)
+
   current_filename = "./media/tweets/#{timestamp}.pdf"
   tweets_path = "./media/tweets/*.pdf"
 
   return if Dir[tweets_path].include?(current_filename)
+  company = %w(SpaceX Tesla solarcity boringcompany).sample
+
   # do nothing if most recent tweet has been formatted already
 
   account_created = tweet.user.created_at
@@ -86,78 +95,80 @@ def get_tweets(from: 'elonmusk', number: 1)
     outputter = Barby::PrawnOutputter.new(barcode)
     barcode.annotate_pdf(self, height: 20, x: (bounds.width - outputter.width), y: bounds.top )
 
-    float do
-      text_box upc.gsub('/', ''), at: [(bounds.width - outputter.width), bounds.top], size: 10, align: :center
-    end
+    text_box upc.gsub('/', ''), at: [(bounds.width - outputter.width), bounds.top], size: 10, align: :center
 
-    float do
-      text_box 'Pub. No.: ', at: [300, 690], style: :bold, size: 12, align: :left, width: (bounds.width - 300)
-      text_box upc, at: [300, 690], style: :bold, size: 15, align: :right, width: (bounds.width - 300)
-      text_box 'Pub. Date: ', at: [300, 675], style: :bold, size: 12, align: :left, width: (bounds.width - 300)
-      text_box time.strftime('%b. %e, %Y'), at: [300, 675], style: :bold, size: 15, align: :right, width: (bounds.width - 300)
-    end #float
+    text_box 'Pub. No.: ', at: [300, 690], style: :bold, size: 12, align: :left, width: (bounds.width - 300)
+    text_box upc, at: [300, 690], style: :bold, size: 15, align: :right, width: (bounds.width - 300)
+    text_box 'Pub. Date: ', at: [300, 675], style: :bold, size: 12, align: :left, width: (bounds.width - 300)
+    text_box time.strftime('%b. %e, %Y'), at: [300, 675], style: :bold, size: 15, align: :right, width: (bounds.width - 300)
 
     text "United States\nPatent Application Publication", style: :bold, size: 20, align: :left
-    text "@#{tweet.user.screen_name}, et al.", style: :bold, size: 15, align: :left
+    text "#{tweet.user.name.split.last} et al.", style: :bold, size: 15, align: :left
 
     move_down 5
     stroke_horizontal_rule
     move_down 10
 
     column_box([0, cursor], :columns => 2, :width => bounds.width, height: 250) do
+      ###
+      # Grid
+      ###
       define_grid(:columns => 4, :rows => 12, :gutter => 10)
 
-      title_box = grid([0, 0], [2, 3])
+      title_box = grid([0, 0], [1, 3])
 
-      text_box tweet.text.gsub(/(@\S+)/, '').upcase, at: [title_box.left, title_box.top], style: :bold, width: title_box.width, height: title_box.height, overflow: :shrink_to_fit, min_font_size: 10, size: 30
+      text_box get_title(tweet, client).upcase, at: [title_box.left, title_box.top], style: :bold, width: title_box.width, height: title_box.height, overflow: :shrink_to_fit, min_font_size: 10, size: 14, leading: -2
 
-      grid(3, 0).bounding_box do
+      grid(2, 0).bounding_box do
         text "Applicant:"
       end
-      grid([3, 1], [3,3]).bounding_box do
+      grid([2, 1], [2, 3]).bounding_box do
         indent(-15) do
-          text "@#{tweet.user.screen_name}", style: :bold
+          text "#{tweet.user.name}", style: :bold
         end
       end
 
-      grid(4, 0).bounding_box do
+      grid(3, 0).bounding_box do
         text "Inventors:"
       end
       inventors_string = ''
-      inventors(tweet, client).each do |inventor|
-        inventors_string += "<b>#{inventor.name}</b>, @#{inventor.screen_name}; "
+      inventors(tweet, client, company).each do |inventor|
+        inventors_string += "<b>#{inventor.name}</b>, @#{inventor.screen_name};\n"
       end
-      grid([4, 1], [6,3]).bounding_box do
+      grid([3, 1], [5,3]).bounding_box do
         indent(-15) do
-          text inventors_string, inline_format: true, leading: -3
+          text inventors_string.chomp(";\n"), inline_format: true, leading: -1
         end
       end
 
-      grid(6, 0).bounding_box do
+      grid(5, 0).bounding_box do
         text "Appl. No.:"
       end
-      grid([6, 1], [6,3]).bounding_box do
+      grid([5, 1], [5, 3]).bounding_box do
         indent(-15) do
           text "#{tweet.favorite_count}/" +
           "#{tweet.retweet_count}", style: :bold
         end
       end
 
-      grid(7, 0).bounding_box do
+      grid(6, 0).bounding_box do
         text "Filed:"
       end
-      grid([7, 1], [7,3]).bounding_box do
+      grid([6, 1], [6,3]).bounding_box do
         indent(-15) do
           text "#{account_created.strftime('%b.%e, %Y')}", style: :bold
         end
       end
 
-      grid([8, 1], [8,3]).bounding_box do
+      grid([7, 1], [7,3]).bounding_box do
         text "Publication Classification", style: :bold
       end
 
-      grid([9, 0], [11,3]).bounding_box do
-        define_grid(:columns => 4, :rows => 4, :gutter => 1)
+      grid([8, 0], [11,3]).bounding_box do
+        ###
+        # Grid
+        ###
+        define_grid(:columns => 4, :rows => 5, :gutter => 1)
 
         grid(0,0).bounding_box do
           text "Int. Cl.", style: :bold
@@ -165,7 +176,7 @@ def get_tweets(from: 'elonmusk', number: 1)
 
         grid([1,0], [1,1]).bounding_box do
           text SecureRandom.hex(2).upcase +
-          " #{tweet.user.favourites_count}/#{tweet.user.friends_count}", style: :bold_italic
+          "  #{tweet.user.favourites_count}/#{tweet.user.friends_count}", style: :bold_italic
         end
 
         grid(1,2).bounding_box do
@@ -176,46 +187,52 @@ def get_tweets(from: 'elonmusk', number: 1)
           text "U.S. Cl.", style: :bold
         end
 
-        grid([3,0], [3,1]).bounding_box do
+        grid([3,0], [4,1]).bounding_box do
           text SecureRandom.hex(2).upcase +
-          " 00/#{tweet.user.statuses_count}", style: :bold_italic
+          "  00/#{tweet.user.statuses_count}", style: :bold_italic
+          text SecureRandom.hex(2).upcase +
+          "  00/#{tweet.user.favorites_count}", style: :bold_italic
         end
 
-        grid(3,2).bounding_box do
+        grid([3,2], [4,2]).bounding_box do
+          text "(#{account_created.strftime('%Y.%m')})"
           text "(#{account_created.strftime('%Y.%m')})"
         end
+        ###
+        # Grid
+        ###
       end
+      ###
+      # Grid
+      ###
 
-      pad_bottom(45) { text "ABSTRACT", style: :bold, align: :center }
+      pad_bottom(30) { text "ABSTRACT", style: :bold, align: :center }
 
-      text "#{abstract(tweet, client)}", align: :justify
-      # put this into a text_box that will truncate text
+      text_box abstracted_tweet, at: [275, cursor], width: bounds.width, height: cursor, align: :justify, overflow: :shrink_to_fit, min_font_size: 10
     end #column_box
 
-    labels = abstract(tweet, client).gsub(/[\.!?,]/, '').split.map(&:capitalize).reject { |e| e[0] == '@' or e.length < 2 }
-    labels += %W(Elon Musk) if labels.length <= 2
+    labels = abstracted_tweet.gsub(/[\.!?,]/, '').split.map do |label|
+      next if label.length < 2
+      label.gsub(/(@\w+)/) {|s| client.user(s).name } if label.start_with?('@')
+      label.upcase
+    end.compact.uniq
+
+    labels << %W(ELON GRIMES 420 EMERALDS).sample(4 - labels.length) if labels.length < 4
 
     bounding_box([0, cursor], width: bounds.width, height: cursor) do
-      stroke_axis
+      image Dir["./media/diagrams/*.png"].sample, fit: [bounds.width, bounds.height], vposition: :top, position: :center
 
-      stroke do
-        rounded_rectangle [400, 350], 100, 200, 20
-        curve [400, 250], [200, 300], :bounds => [[200, 200], [250, 250]]
-        curve [450, 150], [150, 75], :bounds => [[300, 150], [350, 200]]
-        curve [100, 125], [150, 250], :bounds => [[100, 200], [150, 250]]
+      font 'Arial' do
+        [[90, 282], [200, 240], [275, 115], [415, 95]].each do |position|
+          fill_color "FFFFFF"
+          fill_rectangle position, 100, 30
+          fill_color "000000"
+
+          text_box labels.delete(labels.sample), at: position, height: 30, width: 100, overflow: :shrink_to_fit, min_font_size: 8, size: 9, align: :center, valign: :top
+        end
+
+        text_box 'FIG. 1', at: [0, 20], size: 12, align: :center, width: bounds.width, style: :bold
       end
-
-      bounding_box([100, 350], :width => 100, height: 100) do
-        text labels.delete(labels.sample), valign: :center, align: :center
-        transparent(0.5) { stroke_bounds }
-      end
-
-      stroke_polygon [50, 100], [100, 125], [150, 100],
-                     [150, 50], [100, 25], [50, 50]
-      text_box labels.delete(labels.sample), at: [50, 75], width: 100, align: :center
-
-      text_box labels.delete(labels.sample) + "\n" +
-      labels.delete(labels.sample), at: [400, 250], width: 100, align: :center
     end #bounding_box for diagram
 
   end #generate PDF
@@ -227,9 +244,7 @@ def get_tweets(from: 'elonmusk', number: 1)
 
   png_file = File.new png_path
 
-  companies = %w(@SpaceX @Tesla @solarcity @boringcompany)
-
-  client.update_with_media "new product from #{companies.sample}:", png_file, options: { in_reply_to_status: tweet }
+  client.update_with_media "new product from @#{company}:", png_file, in_reply_to_status: tweet if ENV["ENVIRONMENT"] == 'production'
 
   Dir[tweets_path].reject{ |file_name| file_name.include?(timestamp) }.each do |pdf_path|
     File.delete(pdf_path)
