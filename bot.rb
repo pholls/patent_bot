@@ -53,6 +53,12 @@ def get_title(tweet, client)
   return tweet.text.gsub(/((https:\/\/t\.co\/\S+))/, '').gsub(/(@\w+)/) {|s| client.user(s).name }.strip
 end
 
+def get_company(tweet)
+  mentions = tweet.user_mentions.collect(&:screen_name)
+  companies = %w(SpaceX Tesla solarcity boringcompany)
+  ( mentions & companies ).first or companies.sample
+end
+
 def tweet_too_old?(tweet)
   (Time.now.utc - tweet.created_at) / 60 > 10
 end
@@ -72,15 +78,10 @@ def get_tweets(from: 'elonmusk', number: 1)
 
   abstracted_tweet = abstract(tweet, client)
 
-  current_filename = "./media/tweets/#{timestamp}.pdf"
-  tweets_path = "./media/tweets/*.pdf"
-
   return if tweet.retweet? or tweet_too_old?(tweet)
   # do nothing if most recent tweet is too old (> 10 minutes)
 
-  mentions = tweet.user_mentions.collect(&:screen_name)
-  companies = %w(SpaceX Tesla solarcity boringcompany)
-  company = ( mentions & companies ).first or companies.sample
+  company = get_company(tweet)
 
   account_created = tweet.user.created_at
 
@@ -241,6 +242,9 @@ def get_tweets(from: 'elonmusk', number: 1)
     end #bounding_box for diagram
 
   end #generate PDF
+
+  current_filename = "./media/tweets/#{timestamp}.pdf"
+  tweets_path = "./media/tweets/*.pdf"
 
   image = Magick::Image.read(current_filename)
   image[0].write(current_filename.sub(".pdf", "") + ".png")
