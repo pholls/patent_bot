@@ -27,7 +27,7 @@ def abstract(tweet, client)
   text = tweet.full_text.gsub(/((https:\/\/t\.co\/\S+))/, '').strip
   text += !!(text =~ /[\.!?]\z/) ? ' ' : '. '
   string = ''
-  string += text.gsub(/(@\w+)/) {|s| client.user(s).name }
+  string += text.gsub(/@(\w+)/) { |s| tweet.user_mentions.find { |u| u.screen_name == $1 }&.name }
   if reply_to_self?(tweet)
     string.prepend abstract(client.status(tweet.in_reply_to_status_id), client)
   end
@@ -50,7 +50,7 @@ end
 
 def get_title(tweet, client)
   return get_title(client.status(tweet.in_reply_to_status_id), client) if reply_to_self? tweet
-  return tweet.text.gsub(/((https:\/\/t\.co\/\S+))/, '').gsub(/(@\w+)/) {|s| client.user(s).name }.strip
+  return tweet.text.gsub(/((https:\/\/t\.co\/\S+))/, '').gsub(/@(\w+)/) { |s| tweet.user_mentions.find { |u| u.screen_name == $1 }&.name }.strip
 end
 
 def get_company(tweet)
@@ -219,7 +219,7 @@ def get_tweets(from: 'elonmusk', number: 1)
 
     labels = abstracted_tweet.gsub(/[\.!?,]/, '').split.map do |label|
       next if label.length < 2
-      label.gsub(/(@\w+)/) {|s| client.user(s).name } if label.start_with?('@')
+      label.gsub(/$@(\w+)/) { |s| tweet.user_mentions.find { |u| u.screen_name == $1 }&.name }
       label.upcase
     end.compact.uniq
 
