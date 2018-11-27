@@ -218,7 +218,7 @@ def get_tweets(from: 'elonmusk', number: 1)
     end #column_box
 
     labels = abstracted_tweet.gsub(/[\.!?,]/, '').split.map do |label|
-      next if label.length < 2
+      next if label.length < 4
       label.gsub(/$@(\w+)/) { |s| tweet.user_mentions.find { |u| u.screen_name == $1 }&.name }
       label.upcase
     end.compact.uniq
