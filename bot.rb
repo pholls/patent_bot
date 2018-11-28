@@ -24,7 +24,7 @@ def reply_to_self?(tweet)
 end
 
 def abstract(tweet, client)
-  text = tweet.full_text.gsub(/((https:\/\/t\.co\/\S+))/, '').strip
+  text = tweet.full_text.gsub(/((https:\/\/t\.co\/\S+))/) { |s| tweet.uris.find { |e| e.url }.title }.strip
   text += !!(text =~ /[\.!?]\z/) ? ' ' : '. '
   string = ''
   string += text.gsub(/@(\w+)/) { |s| tweet.user_mentions.find { |u| u.screen_name == $1 }&.name }
