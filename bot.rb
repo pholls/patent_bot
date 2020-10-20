@@ -24,10 +24,10 @@ def reply_to_self?(tweet)
 end
 
 def abstract(tweet, client)
-  text = tweet.full_text.gsub(/((https:\/\/t\.co\/\S+))/, '').strip
+  text = tweet.full_text.gsub(/((https:\/\/t\.co\/\S+))/) { |s| tweet.uris.find { |e| e.url }.title }.strip
   text += !!(text =~ /[\.!?]\z/) ? ' ' : '. '
   string = ''
-  string += text.gsub(/(@\w+)/) {|s| client.user(s).name }
+  string += text.gsub(/@(\w+)/) { |s| tweet.user_mentions.find { |u| u.screen_name == $1 }&.name }
   if reply_to_self?(tweet)
     string.prepend abstract(client.status(tweet.in_reply_to_status_id), client)
   end
@@ -50,7 +50,13 @@ end
 
 def get_title(tweet, client)
   return get_title(client.status(tweet.in_reply_to_status_id), client) if reply_to_self? tweet
-  return tweet.text.gsub(/((https:\/\/t\.co\/\S+))/, '').gsub(/(@\w+)/) {|s| client.user(s).name }.strip
+  return tweet.text.gsub(/((https:\/\/t\.co\/\S+))/, '').gsub(/@(\w+)/) { |s| tweet.user_mentions.find { |u| u.screen_name == $1 }&.name }.strip
+end
+
+def get_company(tweet)
+  mentions = tweet.user_mentions.collect(&:screen_name)
+  companies = %w(SpaceX Tesla solarcity boringcompany)
+  ( mentions & companies ).first or companies.sample
 end
 
 def tweet_too_old?(tweet)
@@ -72,15 +78,10 @@ def get_tweets(from: 'elonmusk', number: 1)
 
   abstracted_tweet = abstract(tweet, client)
 
-  current_filename = "./media/tweets/#{timestamp}.pdf"
-  tweets_path = "./media/tweets/*.pdf"
-
   return if tweet.retweet? or tweet_too_old?(tweet)
   # do nothing if most recent tweet is too old (> 10 minutes)
 
-  mentions = tweet.user_mentions.collect(&:screen_name)
-  companies = %w(SpaceX Tesla solarcity boringcompany)
-  company = ( mentions & companies ).first or companies.sample
+  company = get_company(tweet)
 
   account_created = tweet.user.created_at
 
@@ -217,8 +218,8 @@ def get_tweets(from: 'elonmusk', number: 1)
     end #column_box
 
     labels = abstracted_tweet.gsub(/[\.!?,]/, '').split.map do |label|
-      next if label.length < 2
-      label.gsub(/(@\w+)/) {|s| client.user(s).name } if label.start_with?('@')
+      next if label.length < 4
+      label.gsub(/$@(\w+)/) { |s| tweet.user_mentions.find { |u| u.screen_name == $1 }&.name }
       label.upcase
     end.compact.uniq
 
@@ -241,6 +242,9 @@ def get_tweets(from: 'elonmusk', number: 1)
     end #bounding_box for diagram
 
   end #generate PDF
+
+  current_filename = "./media/tweets/#{timestamp}.pdf"
+  tweets_path = "./media/tweets/*.pdf"
 
   image = Magick::Image.read(current_filename)
   image[0].write(current_filename.sub(".pdf", "") + ".png")
